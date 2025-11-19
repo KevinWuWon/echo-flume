@@ -1,0 +1,7 @@
+{
+  "name": "Aura Flow",
+  "description": "A mesmerizing interactive fluid audio visualizer powered by WebGL.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
