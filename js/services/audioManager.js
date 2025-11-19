@@ -1,20 +1,36 @@
-import { AudioMetrics } from '../types';
+/**
+ * @typedef {Object} AudioMetrics
+ * @property {number} bass
+ * @property {number} mid
+ * @property {number} treble
+ * @property {number} volume
+ */
 
 export class AudioManager {
-  private audioContext: AudioContext | null = null;
-  private analyser: AnalyserNode | null = null;
-  private microphoneSource: MediaStreamAudioSourceNode | null = null;
-  private dataArray: Uint8Array | null = null;
-  private stream: MediaStream | null = null;
-  private nextStartTime: number = 0;
+  constructor() {
+    /** @type {AudioContext | null} */
+    this.audioContext = null;
+    /** @type {AnalyserNode | null} */
+    this.analyser = null;
+    /** @type {MediaStreamAudioSourceNode | null} */
+    this.microphoneSource = null;
+    /** @type {Uint8Array | null} */
+    this.dataArray = null;
+    /** @type {MediaStream | null} */
+    this.stream = null;
 
-  public isInitialized = false;
+    this.isInitialized = false;
+  }
 
-  async initialize(): Promise<void> {
+  /**
+   * Initialize the audio manager
+   * @returns {Promise<void>}
+   */
+  async initialize() {
     if (this.isInitialized) return;
 
     // Prefer 16kHz for speech processing to match Gemini input recommendations
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContextClass = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
     this.audioContext = new AudioContextClass({ sampleRate: 16000 });
 
     this.analyser = this.audioContext.createAnalyser();
@@ -35,15 +51,24 @@ export class AudioManager {
     }
   }
 
-  getAudioContext(): AudioContext | null {
+  /**
+   * @returns {AudioContext | null}
+   */
+  getAudioContext() {
     return this.audioContext;
   }
 
-  getInputStream(): MediaStream | null {
+  /**
+   * @returns {MediaStream | null}
+   */
+  getInputStream() {
     return this.stream;
   }
 
-  getMetrics(): AudioMetrics {
+  /**
+   * @returns {AudioMetrics}
+   */
+  getMetrics() {
     if (!this.analyser || !this.dataArray) {
       return { bass: 0, mid: 0, treble: 0, volume: 0 };
     }
@@ -73,8 +98,6 @@ export class AudioManager {
 
     return { bass, mid, treble, volume };
   }
-
-
 
   cleanup() {
     this.stream?.getTracks().forEach(track => track.stop());
