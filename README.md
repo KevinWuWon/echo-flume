@@ -1,20 +1,31 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Echo Flume
 
-# Run and deploy your AI Studio app
+A fluid visualization application built with Vue 3 and WebGL.
 
-This contains everything you need to run your app locally.
+## Overview
 
-View your app in AI Studio: https://ai.studio/apps/drive/1plqIG5Pm1B3eUSkVwEj3UPgV0YFpVWa5
+Echo Flume is a real-time fluid simulation that reacts to audio input. It features a self-propelling emitter that moves through a fluid medium, creating colorful, dynamic patterns.
 
-## Run Locally
+## Features
 
-**Prerequisites:**  Node.js
+- **Fluid Simulation**: Based on WebGL fluid dynamics.
+- **Audio Reactivity**: Visuals respond to audio intensity.
+- **Vue 3**: Built using Vue 3 ES modules (no build step required).
+- **Tailwind CSS**: Styled for a clean, immersive experience.
 
+## Running Locally
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Since this project uses ES modules directly, you need a local static file server to run it (to avoid CORS issues with local file access).
+
+1.  Start a local server in the project directory:
+
+    ```bash
+    # Python 3
+    python3 -m http.server 8080
+    ```
+
+2.  Open your browser and navigate to `http://localhost:8080`.
+
+## Deployment
+
+This project is designed to be deployed directly to static hosting services like GitHub Pages without a build step.
