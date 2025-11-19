@@ -737,6 +737,25 @@ export default {
         };
       }
 
+      function resizeFBO(target, w, h, internalFormat, format, type, param) {
+        let newFBO = createFBO(w, h, internalFormat, format, type, param);
+        copyProgram.bind();
+        gl.uniform1i(copyProgram.uniforms.uTexture, target.attach(0));
+        blit(newFBO);
+        return newFBO;
+      }
+
+      function resizeDoubleFBO(target, w, h, internalFormat, format, type, param) {
+        if (target.width == w && target.height == h) return target;
+        target.read = resizeFBO(target.read, w, h, internalFormat, format, type, param);
+        target.write = createFBO(w, h, internalFormat, format, type, param);
+        target.width = w;
+        target.height = h;
+        target.texelSizeX = 1.0 / w;
+        target.texelSizeY = 1.0 / h;
+        return target;
+      }
+
       let dye;
       let velocity;
       let divergence;
@@ -759,8 +778,15 @@ export default {
 
         gl.disable(gl.BLEND);
 
-        if (!dye) dye = createDoubleFBO(dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
-        if (!velocity) velocity = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
+        if (!dye)
+          dye = createDoubleFBO(dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
+        else
+          dye = resizeDoubleFBO(dye, dyeRes.width, dyeRes.height, rgba.internalFormat, rgba.format, texType, filtering);
+
+        if (!velocity)
+          velocity = createDoubleFBO(simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
+        else
+          velocity = resizeDoubleFBO(velocity, simRes.width, simRes.height, rg.internalFormat, rg.format, texType, filtering);
 
         divergence = createFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
         curl = createFBO(simRes.width, simRes.height, r.internalFormat, r.format, texType, gl.NEAREST);
@@ -799,14 +825,19 @@ export default {
       }
 
       function getResolution(resolution) {
-        let aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
+        let aspectRatio = canvas.width / canvas.height;
         if (aspectRatio < 1) aspectRatio = 1.0 / aspectRatio;
         let min = Math.round(resolution);
         let max = Math.round(resolution * aspectRatio);
-        if (gl.drawingBufferWidth > gl.drawingBufferHeight)
+        if (canvas.width > canvas.height)
           return { width: max, height: min };
         else
           return { width: min, height: max };
+      }
+
+      function scaleByPixelRatio(input) {
+        let pixelRatio = window.devicePixelRatio || 1;
+        return Math.floor(input * pixelRatio);
       }
 
       // --- Blit Helper ---
@@ -924,9 +955,11 @@ export default {
         lastTime = Date.now();
 
         // Resize if needed
-        if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-          canvas.width = canvas.clientWidth;
-          canvas.height = canvas.clientHeight;
+        const width = scaleByPixelRatio(canvas.clientWidth);
+        const height = scaleByPixelRatio(canvas.clientHeight);
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
           initFramebuffers();
         }
 
