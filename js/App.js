@@ -75,7 +75,7 @@ export default {
       // Exponential scaling: Dragging up (positive delta) increases gain significantly but smoothly
       // Sensitivity: 300px move ~ 4.5x change
       const sensitivity = 0.005;
-      const newGain = Math.max(0.1, dragState.value.startGain * Math.exp(deltaY * sensitivity));
+      const newGain = Math.max(0.01, dragState.value.startGain * Math.exp(deltaY * sensitivity));
 
       gain.value = newGain;
       dragState.value = { ...dragState.value, currentY: e.clientY };
