@@ -896,6 +896,29 @@ export default {
       // Emitter State
       let emitterPos = { x: 0.5, y: 0.5 };
       let emitterAngle = 0;
+      let currentColor = { r: 0, g: 0, b: 0 };
+
+      function hslToRgb(h, s, l) {
+        let r, g, b;
+        if (s === 0) {
+          r = g = b = l; // achromatic
+        } else {
+          const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+          };
+          const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+          const p = 2 * l - q;
+          r = hue2rgb(p, q, h + 1 / 3);
+          g = hue2rgb(p, q, h);
+          b = hue2rgb(p, q, h - 1 / 3);
+        }
+        return { r, g, b };
+      }
 
       function updateKeywords() {
         let displayKeywords = [];
@@ -978,12 +1001,34 @@ export default {
 
         // Splat based on audio
         if (volume > 0.01) {
-          // Calculate color based on frequency
-          // Bass -> Red/Purple, Mid -> Green/Blue, Treble -> Yellow/White
-          // Simple mapping:
-          const r = bass * 2.0 + mid * 0.5;
-          const g = mid * 2.0 + treble * 0.5;
-          const b = treble * 2.0 + bass * 0.5;
+          // Frequency Mapping
+          const freq = metrics.frequency || 0;
+
+          // Musical Note Mapping (Chroma)
+          // MIDI Note = 12 * log2(freq / 440) + 69
+          // Chroma = Note % 12 (0 = C, 1 = C#, etc.)
+          let targetHue = 0;
+          if (freq > 20) { // Minimum audible frequency check
+            const note = 12 * Math.log2(freq / 440) + 69;
+            // Use modulo 12 to get chroma (0-12), then normalize to 0-1 for Hue
+            // We add 1200 to ensure the dividend is positive before modulo if needed,
+            // though freq > 20 ensures note is > ~13.
+            const chroma = (note % 12 + 12) % 12;
+            targetHue = chroma / 12.0;
+          }
+
+          const targetRgb = hslToRgb(targetHue, 1.0, 0.5);
+
+          // Smooth color transition
+          const lerpSpeed = 0.1;
+          currentColor.r += (targetRgb.r - currentColor.r) * lerpSpeed;
+          currentColor.g += (targetRgb.g - currentColor.g) * lerpSpeed;
+          currentColor.b += (targetRgb.b - currentColor.b) * lerpSpeed;
+
+          // Enhance brightness based on volume
+          const r = currentColor.r * (1 + volume);
+          const g = currentColor.g * (1 + volume);
+          const b = currentColor.b * (1 + volume);
 
           // Direction based on movement (tangent)
           const dx = Math.cos(t) * 100 * volume;

@@ -4,6 +4,7 @@
  * @property {number} mid
  * @property {number} treble
  * @property {number} volume
+ * @property {number} frequency
  */
 
 export class AudioManager {
@@ -70,7 +71,7 @@ export class AudioManager {
    */
   getMetrics() {
     if (!this.analyser || !this.dataArray) {
-      return { bass: 0, mid: 0, treble: 0, volume: 0 };
+      return { bass: 0, mid: 0, treble: 0, volume: 0, frequency: 0 };
     }
 
     this.analyser.getByteFrequencyData(this.dataArray);
@@ -96,7 +97,20 @@ export class AudioManager {
     const treble = trebleSum / (length - bassRange - midRange);
     const volume = (bass + mid + treble) / 3;
 
-    return { bass, mid, treble, volume };
+    // Calculate dominant frequency
+    let maxVal = -1;
+    let maxIndex = -1;
+    for (let i = 0; i < length; i++) {
+      if (this.dataArray[i] > maxVal) {
+        maxVal = this.dataArray[i];
+        maxIndex = i;
+      }
+    }
+
+    const nyquist = this.audioContext.sampleRate / 2;
+    const frequency = maxIndex * (nyquist / length);
+
+    return { bass, mid, treble, volume, frequency };
   }
 
   cleanup() {
